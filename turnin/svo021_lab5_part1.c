@@ -1,6 +1,6 @@
 /*	Author: lab
  *  Partner(s) Name: Scott Vo
- *	Lab Section:
+ *	Lab Section:21
  *	Assignment: Lab 5  Exercise 1
  *	Exercise Description: [optional - include for your own benefit]
  *
