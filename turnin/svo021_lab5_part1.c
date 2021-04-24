@@ -1,7 +1,7 @@
 /*	Author: lab
  *  Partner(s) Name: Scott Vo
  *	Lab Section:
- *	Assignment: Lab #  Exercise #
+ *	Assignment: Lab 5  Exercise 1
  *	Exercise Description: [optional - include for your own benefit]
  *
  *	I acknowledge all content contained herein, excluding template or example
