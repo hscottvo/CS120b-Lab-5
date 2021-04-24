@@ -12,101 +12,126 @@
 #include "simAVRHeader.h"
 #endif
 
-enum counter_states {counter_init, counter_reset, counter_wait, counter_dec, counter_dec_wait, counter_inc, counter_inc_wait} counter_state;
+enum light_states {light_init, light_off, light_shift_left, light_shift_left_wait, light_shift_right, light_shift_right_wait, light_flash, light_flash_wait, light_reset} light_state;
 unsigned char tempA = 0;
+unsigned char i = 0
+unsigned char counter = 2;
 
-void counter_tick() {
-	switch(counter_state) {
-		case counter_init:
-			counter_state = counter_wait;
-			PORTC = 0x07;
+void light_tick() {
+	switch(light_state) {
+		case light_init:
+			light_state = light_off;
 			break;
-		case counter_reset:
-			if ((tempA & 0x03) == 0x03) {
-				counter_state = counter_reset;
+		case light_off:
+			if ((tempA & 0x01) == 0x00) {
+				light_state = light_off;
 			}
 			else {
-				counter_state = counter_wait;
-			}
-		case counter_wait:
-			if ((tempA & 0x03) == 0x00) {
-				counter_state = counter_wait;
-			} 
-			else if ((tempA & 0x03) == 0x01){
-				counter_state = counter_inc;
-			} 
-			else if ((tempA & 0x03) == 0x02) {
-				counter_state = counter_dec;
-			}
-			else {
-				counter_state = counter_reset;
+				light_state = light_shift_left;
+				PORTB = 0x01;
 			}
 			break;
-		case counter_dec:
-			if ((tempA & 0x03) == 0x03) {
-				counter_state = counter_reset;
+		case light_shift_left:
+			if ((tempA & 0x01) == 0x00) {
+				light_state = light_shift_left;
 			} 
 			else {
-				counter_state = counter_dec_wait;
+				light_state = light_shift_left_wait;
+				++i;
 			}
 			break;
-		case counter_dec_wait: 
-			if ((tempA & 0x03) == 0x03) {
-				counter_state = counter_reset;
-			}
-			else if ((tempA & 0x03) == 0x02) {
-				counter_state = counter_dec_wait;
+		case light_shift_left_wait:
+			if ((tempA & 0x01) == 0x00) {
+				if (i < counter) light_state = light_shift_left;
+				else {
+					light_state = light_shift_right;
+					i = 0;
+					PORTB = PORTB << 1;
+				}
 			}
 			else {
-				counter_state = counter_wait;
+				light_state = light_shift_left_wait;
 			}
 			break;
-		case counter_inc: 
-			if ((tempA & 0x03) == 0x03) {
-				counter_state = counter_reset;
+		case light_shift_right:
+			if ((tempA & 0x01) == 0x00) {
+				light_state = light_shift_right;
+			} 
+			else {
+				light_state = light_shift_right_wait;
+				++i;
+			}
+			break;
+		case light_shift_right_wait: 
+			if ((tempA & 0x01) == 0x00) {
+				if (i < counter) light_state = light_shift_right;
+				else {
+					light_state = light_flash;
+					i = 0;
+					PORTB = 0x3F;
+				}
+			}
+			else { 
+				light_state = light_shift_right_wait;
+			}
+			break;
+		case light_flash: 
+			if ((tempA & 0x01) == 0x00) {
+				light_state = light_flash;
 			}
 			else {
-				counter_state = counter_inc_wait;
+				light_state = light_flash_wait;
+				++i;
 			}
 			break;
-		case counter_inc_wait: 
-			if ((tempA & 0x03) == 0x03) {
-				counter_state = counter_reset;
-			}
-			else if ((tempA & 0x03) == 0x01) {
-				counter_state = counter_inc_wait;
+		case light_flash_wait:
+			if ((tempA & 0x01) == 0x00) {
+				if (i < counter) light_state = light_flash;
+				else {
+					light_state = light_reset;
+					i = 0;
+					PORTB = 0x00;
+				}
 			}
 			else {
-				counter_state = counter_wait;
+				light_state = light_flash_wait;
 			}
 			break;
+		case light_reset: 
+			if ((tempA & 0x01) == 0x01) {
+				light_state = light_reset;
+			}
+			else {
+				light_state = light_off;
+			}
 		default: 
-			counter_state = counter_init;
 			break;
 	}
-	switch(counter_state) {
-		case counter_init: 
-			PORTC = 0x07; 
+	switch(light_state) {
+		case light_init:
+			PORTB = 0x00;
 			break;
-		case counter_reset:
-			PORTC = 0x00;
+		case light_off:
+			PORTB = 0x00;
 			break;
-		case counter_wait:
+		case light_shift_left:
+			PORTB = PORTB << 2;
 			break;
-		case counter_dec:
-			if (PORTC > 0x00) {
-				PORTC = PORTC - 1;
-			}
+		case light_shift_left_wait:
 			break;
-		case counter_dec_wait: 
+		case light_shift_right:
+			PORTB = PORTB >> 2;
 			break;
-		case counter_inc: 
-			if (PORTC < 0x09) {
-				PORTC = PORTC + 1;
-			}
+		case light_shift_right_wait: 
 			break;
+		case light_flash: 
+			PORTB = (~PORTB) & 0x3F;
+			break;
+		case light_flash_wait:
+			break;
+		case light_reset:
 		default: 
-			// PORTC = 0x07;
+			PORTB = 0x00;
 			break;
 	}
 }
@@ -114,11 +139,12 @@ void counter_tick() {
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00; PORTA = 0xFF;
-	DDRC = 0xFF; PORTC = 0x00;
+	DDRB = 0xFF; PORTB = 0x00;
     /* Insert your solution below */
+	light_state = light_init;
     while (1) {
 		tempA = ~PINA;
-		counter_tick();
+		light_tick();
     }
     return 1;
 }
