@@ -39,6 +39,7 @@ void light_tick() {
 			}
 			else {
 				light_state = light_off_wait;
+				PORTB = 0x01;
 			}
 		case light_shift_left:
 			if ((tempA & 0x01) == 0x00) {
@@ -46,7 +47,7 @@ void light_tick() {
 			} 
 			else {
 				light_state = light_shift_left_wait;
-				PORTB = PORTB << 2;
+				PORTB = 0x01 << (2 * i);
 				++i;
 			}
 			break;
@@ -56,7 +57,7 @@ void light_tick() {
 				else {
 					light_state = light_shift_right;
 					i = 0;
-					PORTB = PORTB << 1;
+					PORTB = 0x20;
 				}
 			}
 			else {
@@ -69,7 +70,7 @@ void light_tick() {
 			} 
 			else {
 				light_state = light_shift_right_wait;
-				PORTB = PORTB >> 2;
+				PORTB = 0x20 >> (2 * i);
 				++i;
 			}
 			break;
