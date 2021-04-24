@@ -12,9 +12,9 @@
 #include "simAVRHeader.h"
 #endif
 
-enum light_states {light_init, light_off, light_shift_left, light_shift_left_wait, light_shift_right, light_shift_right_wait, light_flash, light_flash_wait, light_reset} light_state;
+enum light_states {light_init, light_off, light_off_wait, light_shift_left, light_shift_left_wait, light_shift_right, light_shift_right_wait, light_flash, light_flash_wait, light_reset} light_state;
 unsigned char tempA = 0;
-unsigned char i = 0
+unsigned char i = 0;
 unsigned char counter = 2;
 
 void light_tick() {
@@ -29,10 +29,17 @@ void light_tick() {
 				light_state = light_off;
 			}
 			else {
-				light_state = light_shift_left;
+				light_state = light_off_wait;
 				PORTB = 0x01;
 			}
 			break;
+		case light_off_wait:
+			if ((tempA & 0x01) == 0x00) {
+				light_state = light_shift_left;
+			}
+			else {
+				light_state = light_off_wait;
+			}
 		case light_shift_left:
 			if ((tempA & 0x01) == 0x00) {
 				light_state = light_shift_left;
@@ -45,7 +52,7 @@ void light_tick() {
 			break;
 		case light_shift_left_wait:
 			if ((tempA & 0x01) == 0x00) {
-				if (i < counter) light_state = light_shift_left;
+				if (i <= counter) light_state = light_shift_left;
 				else {
 					light_state = light_shift_right;
 					i = 0;
@@ -68,7 +75,7 @@ void light_tick() {
 			break;
 		case light_shift_right_wait: 
 			if ((tempA & 0x01) == 0x00) {
-				if (i < counter) light_state = light_shift_right;
+				if (i <= counter) light_state = light_shift_right;
 				else {
 					light_state = light_flash;
 					i = 0;
@@ -91,7 +98,7 @@ void light_tick() {
 			break;
 		case light_flash_wait:
 			if ((tempA & 0x01) == 0x00) {
-				if (i < counter) light_state = light_flash;
+				if (i <= counter) light_state = light_flash;
 				else {
 					light_state = light_reset;
 					i = 0;
