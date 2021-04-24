@@ -21,8 +21,10 @@ void light_tick() {
 	switch(light_state) {
 		case light_init:
 			light_state = light_off;
+			PORTB = 0x00;
 			break;
 		case light_off:
+			PORTB = 0x00;
 			if ((tempA & 0x01) == 0x00) {
 				light_state = light_off;
 			}
@@ -37,6 +39,7 @@ void light_tick() {
 			} 
 			else {
 				light_state = light_shift_left_wait;
+				PORTB = PORTB << 2;
 				++i;
 			}
 			break;
@@ -59,6 +62,7 @@ void light_tick() {
 			} 
 			else {
 				light_state = light_shift_right_wait;
+				PORTB = PORTB >> 2;
 				++i;
 			}
 			break;
@@ -81,6 +85,7 @@ void light_tick() {
 			}
 			else {
 				light_state = light_flash_wait;
+				PORTB = (~PORTB) & 0x3F;
 				++i;
 			}
 			break;
@@ -105,32 +110,7 @@ void light_tick() {
 				light_state = light_off;
 			}
 		default: 
-			break;
-	}
-	switch(light_state) {
-		case light_init:
-			PORTB = 0x00;
-			break;
-		case light_off:
-			PORTB = 0x00;
-			break;
-		case light_shift_left:
-			PORTB = PORTB << 2;
-			break;
-		case light_shift_left_wait:
-			break;
-		case light_shift_right:
-			PORTB = PORTB >> 2;
-			break;
-		case light_shift_right_wait: 
-			break;
-		case light_flash: 
-			PORTB = (~PORTB) & 0x3F;
-			break;
-		case light_flash_wait:
-			break;
-		case light_reset:
-		default: 
+			light_state = light_init;
 			PORTB = 0x00;
 			break;
 	}
